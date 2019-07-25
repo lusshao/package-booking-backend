@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -63,6 +64,7 @@ public class ParcalControllerTest {
         List<Parcel> parcelList = parcelRepository.findAllByParcelStatus(2);
 
         assertThat(parcelList.get(0).getParcelNumber()).isEqualTo("123789");
+        parcelRepository.deleteAll();
     }
     @Test
     public void should_return_parcel_message_when_get_to_parcel_gievn_parcelStatus() throws Exception {
@@ -77,5 +79,65 @@ public class ParcalControllerTest {
         ResultActions result = mockMvc.perform(get("/parcel?status={status}",2));
 
         result.andExpect(status().isOk()).andExpect(jsonPath("$[0].parcelNumber",is("123789")));
+        parcelRepository.deleteAll();
     }
+    @Test
+    public void should_add_parcel_message_when_invoke_find_by_parcel_number_given_parcel(){
+        Parcel parcel = new Parcel("123876","liam","13873332016",1,new Timestamp(new Date().getTime()));
+        parcelRepository.save(parcel);
+
+        Parcel returnParcel = parcelRepository.findByParcelNumber("123876");
+
+        assertThat(returnParcel.getCallNumber()).isEqualTo("13873332016");
+        parcelRepository.deleteAll();
+    }
+
+    @Test
+    public void should_return_parcel_message_when_post_to_parcel_given_parcel() throws Exception {
+        String jsonContent="{\n" +
+                "    \"parcelNumber\": \"123789\",\n" +
+                "    \"recipients\":\"liam\",\n" +
+                "    \"callNumber\":\"13671584662\"\n" +
+                "}";
+        ResultActions result = mockMvc.perform(post("/parcel")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonContent));
+
+        result.andExpect(status().isOk());
+        parcelRepository.deleteAll();
+
+    }
+    @Test
+    public void should_add_parcel_message_when_post_to_parcel_given_parcel() throws Exception {
+        String jsonContent="{\n" +
+                "    \"parcelNumber\": \"123789\",\n" +
+                "    \"recipients\":\"liam\",\n" +
+                "    \"callNumber\":\"13671584662\"\n" +
+                "}";
+        mockMvc.perform(post("/parcel")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonContent));
+
+        assertThat(parcelRepository.findByParcelNumber("123789").getCallNumber()).isEqualTo("13671584662");
+        assertThat(parcelRepository.findByParcelNumber("123789").getRecipients()).isEqualTo("liam");
+
+
+        parcelRepository.deleteAll();
+    }
+
+
+    @Test
+    public void should_update_parcel_message_when_put_to_parcel_given_parcel() throws Exception {
+        Parcel parcel = new Parcel("123456","liam","13873332016",1,new Timestamp(new Date().getTime()));
+        parcelRepository.save(parcel);
+
+        mockMvc.perform(put("/parcel/{id}?status={status}","123456",2));
+
+        assertThat(parcelRepository.findByParcelNumber("123456").getCallNumber()).isEqualTo("13873332016");
+        assertThat(parcelRepository.findByParcelNumber("123456").getRecipients()).isEqualTo("liam");
+
+
+        parcelRepository.deleteAll();
+    }
+
 }

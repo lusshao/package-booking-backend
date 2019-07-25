@@ -10,4 +10,5 @@ import java.util.List;
 public interface ParcelRepository extends JpaRepository<Parcel, Integer> {
 
     List<Parcel> findAllByParcelStatus(int status);
+    Parcel findByParcelNumber(String parcelNumber);
 }
